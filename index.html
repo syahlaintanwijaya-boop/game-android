@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tangkap Kotak</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #dff6ff, #f7fbff);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #1f2d3d;
+      padding: 16px;
+    }
+
+    h1 {
+      margin: 10px 0;
+    }
+
+    .panel {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .card {
+      background: white;
+      padding: 10px 14px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      min-width: 90px;
+      text-align: center;
+    }
+
+    #startBtn {
+      padding: 12px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      background: #2b7fff;
+      color: white;
+      margin-bottom: 14px;
+    }
+
+    #gameArea {
+      position: relative;
+      width: min(92vw, 380px);
+      height: 420px;
+      background: white;
+      border: 3px solid #2b7fff;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+      touch-action: manipulation;
+    }
+
+    #target {
+      position: absolute;
+      width: 72px;
+      height: 72px;
+      border: none;
+      border-radius: 16px;
+      background: #ff4d6d;
+      color: white;
+      font-weight: bold;
+      font-size: 18px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 16px rgba(255,77,109,0.35);
+    }
+
+    #message {
+      margin-top: 14px;
+      text-align: center;
+      max-width: 380px;
+    }
+
+    .small {
+      font-size: 13px;
+      color: #54606f;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎯 Tangkap Kotak</h1>
+
+  <div class="panel">
+    <div class="card">Skor<br><strong id="score">0</strong></div>
+    <div class="card">Waktu<br><strong id="time">20</strong></div>
+    <div class="card">Rekor<br><strong id="best">0</strong></div>
+  </div>
+
+  <button id="startBtn">Mulai Game</button>
+
+  <div id="gameArea">
+    <button id="target">TAP</button>
+  </div>
+
+  <div id="message">
+    Tekan <b>Mulai Game</b>, lalu sentuh kotak merah sebanyak mungkin dalam 20 detik.
+  </div>
+
+  <div class="small">Game ini dibuat dengan GitHub Pages</div>
+
+  <script>
+    const gameArea = document.getElementById("gameArea");
+    const target = document.getElementById("target");
+    const startBtn = document.getElementById("startBtn");
+    const scoreEl = document.getElementById("score");
+    const timeEl = document.getElementById("time");
+    const bestEl = document.getElementById("best");
+    const messageEl = document.getElementById("message");
+
+    let score = 0;
+    let timeLeft = 20;
+    let gameRunning = false;
+    let timer = null;
+    let moveLoop = null;
+
+    const bestScore = localStorage.getItem("bestScoreTangkapKotak") || 0;
+    bestEl.textContent = bestScore;
+
+    function moveTarget() {
+      const areaWidth = gameArea.clientWidth - target.offsetWidth;
+      const areaHeight = gameArea.clientHeight - target.offsetHeight;
+      const x = Math.random() * areaWidth;
+      const y = Math.random() * areaHeight;
+      target.style.left = x + "px";
+      target.style.top = y + "px";
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = 20;
+      gameRunning = true;
+
+      scoreEl.textContent = score;
+      timeEl.textContent = timeLeft;
+      messageEl.innerHTML = "Cepat! Sentuh kotak merah sebanyak mungkin.";
+
+      target.style.display = "flex";
+      moveTarget();
+
+      startBtn.disabled = true;
+      startBtn.style.opacity = "0.6";
+
+      timer = setInterval(() => {
+        timeLeft--;
+        timeEl.textContent = timeLeft;
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+
+      moveLoop = setInterval(() => {
+        if (gameRunning) moveTarget();
+      }, 800);
+    }
+
+    function endGame() {
+      clearInterval(timer);
+      clearInterval(moveLoop);
+      gameRunning = false;
+
+      target.style.display = "none";
+      startBtn.disabled = false;
+      startBtn.style.opacity = "1";
+
+      let best = Number(localStorage.getItem("bestScoreTangkapKotak") || 0);
+
+      if (score > best) {
+        best = score;
+        localStorage.setItem("bestScoreTangkapKotak", best);
+        bestEl.textContent = best;
+        messageEl.innerHTML = `Game selesai! Skor kamu <b>${score}</b>. 🎉 Rekor baru!`;
+      } else {
+        messageEl.innerHTML = `Game selesai! Skor kamu <b>${score}</b>. Coba lagi untuk mengalahkan rekor <b>${best}</b>.`;
+      }
+    }
+
+    target.addEventListener("click", () => {
+      if (!gameRunning) return;
+      score++;
+      scoreEl.textContent = score;
+      moveTarget();
+    });
+
+    startBtn.addEventListener("click", startGame);
+  </script>
+</body>
+</html>
